@@ -1,0 +1,5 @@
+{
+  "name": "WhatsApp Gateway & Bot Simulator",
+  "description": "A modular WhatsApp API Gateway and Bot simulator demonstrating message routing, bot command handling, and provider abstraction. Built with React, TypeScript, and Tailwind CSS.",
+  "requestFramePermissions": []
+}
