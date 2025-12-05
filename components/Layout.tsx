@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -12,16 +13,45 @@ import {
   X,
   Smartphone
 } from 'lucide-react';
-import { PageRoute } from '../types';
 
 interface LayoutProps {
-  currentPage: PageRoute;
-  onNavigate: (page: PageRoute) => void;
+  onLogout?: () => void;
   children: React.ReactNode;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) => {
+export const Layout: React.FC<LayoutProps> = ({ onLogout, children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get current page from URL
+  const currentPage = location.pathname.substring(1) || 'dashboard';
+
+  // Get user data from localStorage
+  const [userData, setUserData] = React.useState<{ name: string; email: string } | null>(null);
+
+  React.useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserData(user);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
+
+  // Get user initials
+  const getUserInitials = () => {
+    if (!userData?.name) return 'U';
+    return userData.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -48,7 +78,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, childre
             {navItems.map((item) => (
                 <button
                     key={item.id}
-                    onClick={() => onNavigate(item.id as PageRoute)}
+                    onClick={() => navigate(`/${item.id}`)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === item.id 
                         ? 'bg-emerald-50 text-emerald-700' 
@@ -61,17 +91,35 @@ export const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, childre
             ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 border border-slate-100">
-                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                    <span className="font-bold text-xs text-slate-600">AD</span>
-                </div>
-                <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-medium truncate">Admin User</p>
-                    <p className="text-xs text-slate-500 truncate">admin@demo.com</p>
-                </div>
-                <Settings className="w-4 h-4 text-slate-400 cursor-pointer hover:text-emerald-600" onClick={() => onNavigate('settings')} />
+        {/* Sidebar Footer - User Info & Logout */}
+        <div className="border-t border-slate-200 p-4">
+          <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-lg">
+            {/* Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-semibold shadow-md flex-shrink-0">
+              {getUserInitials()}
             </div>
+            
+            {/* User Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800 truncate">
+                {userData?.name || 'User'}
+              </p>
+              <p className="text-xs text-slate-500 truncate">
+                {userData?.email || 'user@example.com'}
+              </p>
+            </div>
+
+            {/* Logout Button */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex-shrink-0 p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors group"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+            )}
+          </div>
         </div>
       </aside>
 
@@ -117,12 +165,12 @@ export const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, childre
                     <span className="font-bold text-xl">Menu</span>
                     <button onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5" /></button>
                 </div>
-                <nav className="p-4 space-y-2">
+                <nav className="p-4 space-y-2 flex-1"> {/* Added flex-1 here to push logout to bottom */}
                     {navItems.map((item) => (
                         <button
                             key={item.id}
                             onClick={() => {
-                                onNavigate(item.id as PageRoute);
+                                navigate(`/${item.id}`);
                                 setMobileMenuOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
@@ -134,6 +182,21 @@ export const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, childre
                         </button>
                     ))}
                 </nav>
+                {/* Mobile Logout */}
+                {onLogout && (
+                  <div className="p-4 border-t border-slate-200">
+                    <button
+                      onClick={() => {
+                        onLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors font-medium border border-red-200"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      Logout
+                    </button>
+                  </div>
+                )}
             </div>
             <div className="flex-1 bg-black/20 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
         </div>

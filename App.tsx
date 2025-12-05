@@ -1,39 +1,113 @@
 
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { PageRoute } from './types';
-import { DummyProvider } from './services/whatsapp/provider';
-import { WhatsAppRouter } from './services/whatsapp/router';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { authService } from './services/auth';
 import { DashboardPage } from './pages/DashboardPage';
 import { DemoPage } from './pages/DemoPage';
 import { InboxPage } from './pages/InboxPage';
 import { DevicePage } from './pages/DevicePage';
 import { CommandsPage } from './pages/CommandsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
+function AppRoutes() {
+  const navigate = useNavigate();
 
-// Initialize Services
-const provider = new DummyProvider();
-const router = new WhatsAppRouter(provider);
-
-export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageRoute>('dashboard');
-
-  const renderPage = () => {
-    switch (currentPage) {
-        case 'dashboard': return <DashboardPage onNavigate={setCurrentPage} />;
-        case 'demo': return <DemoPage />;
-        case 'inbox': return <InboxPage />;
-        case 'device': return <DevicePage />;
-        case 'commands': return <CommandsPage />;
-        case 'settings': return <SettingsPage />;
-        default: return <DashboardPage onNavigate={setCurrentPage} />;
-    }
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
   };
 
   return (
-    <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
-      {renderPage()}
-    </Layout>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Protected routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <DashboardPage onNavigate={(page) => navigate(`/${page}`)} />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <DashboardPage onNavigate={(page) => navigate(`/${page}`)} />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/demo"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <DemoPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inbox"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <InboxPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/device"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <DevicePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/commands"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <CommandsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout onLogout={handleLogout}>
+              <SettingsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch all - redirect to dashboard */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 }
