@@ -686,6 +686,9 @@ const SettingsPage = () => {
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageRoute>('dashboard');
 
+  console.log(currentPage);
+  
+
   const renderPage = () => {
     switch (currentPage) {
         case 'dashboard': return <DashboardPage onNavigate={setCurrentPage} />;
